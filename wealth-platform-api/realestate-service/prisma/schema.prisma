@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+
+  id               String      @id @default(uuid())
+
+  full_name        String
+
+  email            String      @unique
+
+  password_hash    String
+
+  is_active        Boolean     @default(true)
+
+  created_at       DateTime    @default(now())
+
+  updated_at       DateTime    @updatedAt
+
+  user_roles       user_roles[]
+
+  audit_logs       audit_logs[]
+}
+
+model roles {
+
+  id               String      @id @default(uuid())
+
+  role_name        String      @unique
+
+  created_at       DateTime    @default(now())
+
+  user_roles       user_roles[]
+}
+
+model user_roles {
+
+  user_id          String
+
+  role_id          String
+
+  assigned_at      DateTime    @default(now())
+
+  user             users       @relation(fields: [user_id], references: [id])
+
+  role             roles       @relation(fields: [role_id], references: [id])
+
+  @@id([user_id, role_id])
+}
+
+model investors {
+
+  id                    String                @id @default(uuid())
+
+  investor_code         String                @unique
+
+  full_name             String
+
+  pan_number            String?               @unique
+
+  date_of_birth         DateTime?
+
+  risk_profile          String?
+
+  created_at            DateTime              @default(now())
+
+  updated_at            DateTime              @updatedAt
+
+  properties            properties[]
+
+  equity_holdings       equity_holdings[]
+
+  mf_holdings           mf_holdings[]
+}
+
+model properties {
+
+  id                    String                @id @default(uuid())
+
+  investor_id           String
+
+  property_name         String?
+
+  property_type         String?
+
+  purchase_date         DateTime?
+
+  purchase_price        Decimal?
+
+  created_at            DateTime              @default(now())
+
+  investor              investors             @relation(fields: [investor_id], references: [id])
+
+  property_valuations   property_valuations[]
+
+  rental_agreements     rental_agreements[]
+}
+
+model property_valuations {
+
+  id                    String       @id @default(uuid())
+
+  property_id           String
+
+  valuation_amount      Decimal?
+
+  valuation_date        DateTime?
+
+  created_at            DateTime     @default(now())
+
+  property              properties   @relation(fields: [property_id], references: [id])
+}
+
+model rental_agreements {
+
+  id                    String       @id @default(uuid())
+
+  property_id           String
+
+  tenant_name           String?
+
+  monthly_rent          Decimal?
+
+  lease_start           DateTime?
+
+  lease_end             DateTime?
+
+  created_at            DateTime     @default(now())
+
+  property              properties   @relation(fields: [property_id], references: [id])
+}
+
+model equity_assets {
+
+  id                    String                @id @default(uuid())
+
+  stock_symbol          String                @unique
+
+  company_name          String?
+
+  exchange_name         String?
+
+  created_at            DateTime              @default(now())
+
+  equity_holdings       equity_holdings[]
+}
+
+model equity_holdings {
+
+  id                    String         @id @default(uuid())
+
+  investor_id           String
+
+  equity_asset_id       String
+
+  quantity              Decimal
+
+  average_buy_price     Decimal?
+
+  created_at            DateTime       @default(now())
+
+  investor              investors      @relation(fields: [investor_id], references: [id])
+
+  equity_asset          equity_assets  @relation(fields: [equity_asset_id], references: [id])
+}
+
+model mf_funds {
+
+  id                    String          @id @default(uuid())
+
+  fund_code             String?         @unique
+
+  fund_name             String?
+
+  category              String?
+
+  created_at            DateTime        @default(now())
+
+  mf_holdings           mf_holdings[]
+}
+
+model mf_holdings {
+
+  id                    String        @id @default(uuid())
+
+  investor_id           String
+
+  fund_id               String
+
+  units                 Decimal?
+
+  average_nav           Decimal?
+
+  created_at            DateTime      @default(now())
+
+  investor              investors     @relation(fields: [investor_id], references: [id])
+
+  mf_fund               mf_funds      @relation(fields: [fund_id], references: [id])
+}
+
+model audit_logs {
+
+  id                    String       @id @default(uuid())
+
+  user_id               String?
+
+  entity_name           String?
+
+  entity_id             String?
+
+  action_type           String?
+
+  metadata              Json?
+
+  created_at            DateTime     @default(now())
+
+  user                  users?       @relation(fields: [user_id], references: [id])
+}
